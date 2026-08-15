@@ -49,7 +49,7 @@ func Register(server *mcp.Server, d Deps) {
 
 	mcp.AddTool(server, &mcp.Tool{
 		Name:        "health",
-		Description: "Ping TAQLYN_API_URL /health. Does not require login.",
+		Description: "Ping the live Taqlyn API /health. Does not require login. Local APIs are not used.",
 	}, d.health)
 
 	mcp.AddTool(server, &mcp.Tool{

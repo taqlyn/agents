@@ -4,7 +4,7 @@
 
 **Clients:** Cursor / Claude / other MCP hosts (stdio subprocess or HTTP). Later: hosted MCP on the same Go binary.
 
-**Externals:** Taqlyn control-plane HTTP API (`TAQLYN_API_URL`). Session Bearer (`POST /v1/auth/login`). Not Ed25519 `sk_` keys.
+**Externals:** Live Taqlyn HTTPS API only (`https://api.rutvik.qzz.io` by default). Session Bearer (`POST /v1/auth/login`). Not localhost, not Ed25519 `sk_` keys.
 
 ```mermaid
 flowchart LR

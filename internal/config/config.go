@@ -2,6 +2,8 @@ package config
 
 import (
 	"fmt"
+	"net"
+	"net/url"
 	"os"
 	"strings"
 
@@ -9,7 +11,8 @@ import (
 )
 
 const (
-	DefaultAPIURL    = "http://127.0.0.1:8080"
+	// DefaultAPIURL is the live Taqlyn control plane. MCP never uses a local API.
+	DefaultAPIURL    = "https://api.rutvik.qzz.io"
 	DefaultTransport = "stdio"
 	DefaultHTTPAddr  = ":8787"
 )
@@ -39,8 +42,8 @@ func Load() (Config, error) {
 		Environment: auth.ParseEnvironment(getenv("TAQLYN_ENV", string(auth.EnvSandbox))),
 		Permission:  auth.ParsePermission(getenv("TAQLYN_PERMISSION", string(auth.PermWrite))),
 	}
-	if cfg.APIURL == "" {
-		return Config{}, fmt.Errorf("TAQLYN_API_URL is empty")
+	if err := AssertLiveAPI(cfg.APIURL); err != nil {
+		return Config{}, err
 	}
 	switch cfg.Transport {
 	case "stdio", "http":
@@ -54,6 +57,41 @@ func Load() (Config, error) {
 		return Config{}, fmt.Errorf("TAQLYN_PERMISSION must be read or write")
 	}
 	return cfg, nil
+}
+
+// AssertLiveAPI rejects loopback, Docker Desktop host, and private LAN targets.
+func AssertLiveAPI(raw string) error {
+	raw = strings.TrimSpace(raw)
+	if raw == "" {
+		return fmt.Errorf("TAQLYN_API_URL is empty")
+	}
+	u, err := url.Parse(raw)
+	if err != nil || u.Host == "" {
+		return fmt.Errorf("TAQLYN_API_URL is not a valid URL")
+	}
+	if u.Scheme != "https" {
+		return fmt.Errorf("TAQLYN_API_URL must be https (live Taqlyn only, not a local API)")
+	}
+	host := strings.ToLower(u.Hostname())
+	if isLocalHost(host) {
+		return fmt.Errorf("TAQLYN_API_URL cannot be local (%s); MCP uses live Taqlyn data only", host)
+	}
+	return nil
+}
+
+func isLocalHost(host string) bool {
+	switch host {
+	case "localhost", "127.0.0.1", "::1", "0.0.0.0", "host.docker.internal", "host.containers.internal":
+		return true
+	}
+	if strings.HasSuffix(host, ".localhost") || strings.HasSuffix(host, ".local") {
+		return true
+	}
+	ip := net.ParseIP(host)
+	if ip == nil {
+		return false
+	}
+	return ip.IsLoopback() || ip.IsPrivate() || ip.IsUnspecified() || ip.IsLinkLocalUnicast()
 }
 
 func getenv(key, fallback string) string {

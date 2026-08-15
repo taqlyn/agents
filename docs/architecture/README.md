@@ -1,7 +1,7 @@
 # Taqlyn agents
 
 **Date:** 2026-08-15  
-**Architecture brief:** A local-first Go MCP authenticates to a Taqlyn account (dashboard session) with **environment** (`sandbox` | `production` | `both`) and **permission** (`read` | `write`). Skills drive integrate/debug so the agent asks the user as little as possible. Shipping form is the **prebuilt image `ghcr.io/taqlyn/agents`** (stdio `docker run -i` or HTTP). Hosted MCP later reuses the same HTTP mode.
+**Architecture brief:** A Go MCP (prebuilt `ghcr.io/taqlyn/agents`) authenticates to the **live** Taqlyn HTTPS API with environment (`sandbox` | `production` | `both`) and permission (`read` | `write`). Local APIs are rejected. Install: `curl -fsSL https://raw.githubusercontent.com/taqlyn/agents/main/scripts/install.sh | bash`.
 
 ## Document map
 

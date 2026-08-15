@@ -17,6 +17,6 @@ COPY --from=build /out/taqlyn-mcp /usr/local/bin/taqlyn-mcp
 ENV TAQLYN_MCP_TRANSPORT=stdio \
     TAQLYN_MCP_ADDR=:8787 \
     TAQLYN_WORKSPACE=/workspace \
-    TAQLYN_API_URL=http://host.docker.internal:8080
+    TAQLYN_API_URL=https://api.rutvik.qzz.io
 EXPOSE 8787
 ENTRYPOINT ["/usr/local/bin/taqlyn-mcp"]
