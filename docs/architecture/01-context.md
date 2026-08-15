@@ -9,10 +9,10 @@
 ```mermaid
 flowchart LR
   Agent[Agent + skills]
-  MCP[taqlyn-mcp]
+  MCP["ghcr.io/taqlyn/agents"]
   API[Taqlyn API]
   App[Customer app repo]
-  Agent -->|MCP tools| MCP
+  Agent -->|docker run -i stdio or HTTP /mcp| MCP
   MCP -->|Bearer session| API
   Agent -->|edit SDK wiring| App
 ```

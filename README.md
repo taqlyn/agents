@@ -1,53 +1,63 @@
 # Taqlyn agents
 
-Go **MCP** plus **agent skills** so an assistant can log into a Taqlyn account, bind apps, fetch sandbox public credentials, and wire SDKs with almost no extra prompting.
+**MCP is a published Docker image.** You do not need Go, and you do not need to clone this repo.
 
-Remote/server MCP is the same HTTP mode; this repo ships **local stdio** and **Docker HTTP**.
+```text
+ghcr.io/taqlyn/agents:latest
+```
 
-## What you get
-
-- Account login (`auth_login`) stored at `~/.config/taqlyn/mcp.json` (mode 0600). Password is never written.
-- Scopes: **environment** `sandbox` | `production` | `both`, **permission** `read` | `write`. Production write requires `confirmProductionWrite`.
-- Tools for apps, platform binds, public credentials, links, and click/match stats.
-- Local `inspect_workspace` / `integration_plan` so the agent can detect Android/iOS/RN/Flutter before asking questions.
-- Skills: `taqlyn-mcp`, `taqlyn-integrate`, `taqlyn-debug`.
+linux/amd64 and linux/arm64. Cursor (or any MCP host) runs the container over stdio. The same image can listen on HTTP for Docker Compose / a future server.
 
 Architecture: [docs/architecture/README.md](docs/architecture/README.md).
 
-## Run locally (stdio)
+## Cursor — pull and run (recommended)
 
-Needs Go 1.25+ and a Taqlyn API (`http://127.0.0.1:8080` from platform compose, or a hosted API).
+One time:
 
 ```bash
-cd packages/agents   # or clone github.com/taqlyn/agents
-go run ./cmd/taqlyn-mcp
+docker pull ghcr.io/taqlyn/agents:latest
+mkdir -p ~/.config/taqlyn
 ```
 
-Cursor MCP config:
+If the pull is unauthorized, sign in once (`docker login ghcr.io`) with a GitHub user that can read the `taqlyn` org package, then pull again.
+
+`~/.cursor/mcp.json` or the project `.cursor/mcp.json`:
 
 ```json
 {
   "mcpServers": {
     "taqlyn": {
-      "command": "go",
-      "args": ["run", "./cmd/taqlyn-mcp"],
-      "cwd": "/ABS/PATH/to/agents",
-      "env": {
-        "TAQLYN_API_URL": "http://127.0.0.1:8080",
-        "TAQLYN_MCP_TRANSPORT": "stdio"
-      }
+      "command": "docker",
+      "args": [
+        "run",
+        "-i",
+        "--rm",
+        "--add-host=host.docker.internal:host-gateway",
+        "-e", "TAQLYN_MCP_TRANSPORT=stdio",
+        "-e", "TAQLYN_WORKSPACE=/workspace",
+        "-e", "TAQLYN_API_URL=http://host.docker.internal:8080",
+        "-v", "taqlyn-mcp-config:/home/mcp/.config/taqlyn",
+        "-v", "${workspaceFolder}:/workspace:ro",
+        "ghcr.io/taqlyn/agents:latest"
+      ]
     }
   }
 }
 ```
 
-Then in chat: the agent should call `auth_login` (sandbox + write is enough to integrate).
+Point `TAQLYN_API_URL` at your control plane (`http://host.docker.internal:8080` for platform compose, or `https://api.example.com` for hosted). Then `auth_login` (sandbox + write is enough to integrate).
 
-## Docker (HTTP)
+Inspect/plan tools use `/workspace` automatically when that mount is present.
+
+## HTTP (no stdio)
 
 ```bash
-cp .env.example .env   # set TAQLYN_API_URL if needed
-docker compose up --build
+docker run --rm -p 8787:8787 \
+  --add-host=host.docker.internal:host-gateway \
+  -e TAQLYN_MCP_TRANSPORT=http \
+  -e TAQLYN_API_URL=http://host.docker.internal:8080 \
+  -v taqlyn-mcp-config:/home/mcp/.config/taqlyn \
+  ghcr.io/taqlyn/agents:latest
 ```
 
 ```json
@@ -60,18 +70,31 @@ docker compose up --build
 }
 ```
 
-`GET /healthz` is the process probe. Token file lives in the `taqlyn_mcp_config` volume.
+Or `docker compose up` in this repo (pulls the same image). `GET /healthz` is the HTTP probe.
+
+## Scopes
+
+| Dimension | Values | Notes |
+|-----------|--------|--------|
+| environment | `sandbox`, `production`, `both` | Default sandbox |
+| permission | `read`, `write` | Default write for integrate |
+| production write | `confirmProductionWrite: true` | Required |
+
+The session is stored in the `taqlyn-mcp-config` volume (`mcp.json`, mode 0600). Password is never written. Public `clientId` / `publicKeyId` only — no private PEM.
 
 ## Skills
+
+From the image users still copy skills onto the machine that runs Cursor (MCP tools plus these files). If this repo is already a submodule:
 
 ```bash
 ./scripts/install-skills.sh
 ```
 
-Or copy `skills/` into the consuming app as `.cursor/skills/`.
+Else fetch the three `SKILL.md` files from [`skills/`](skills/) on GitHub.
 
-## Tests
+## Contributors (Go / local image)
 
 ```bash
 go test ./...
+docker compose -f docker-compose.yml -f docker-compose.build.yml up --build
 ```

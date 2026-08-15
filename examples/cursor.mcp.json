@@ -1,0 +1,19 @@
+{
+  "mcpServers": {
+    "taqlyn": {
+      "command": "docker",
+      "args": [
+        "run",
+        "-i",
+        "--rm",
+        "--add-host=host.docker.internal:host-gateway",
+        "-e", "TAQLYN_MCP_TRANSPORT=stdio",
+        "-e", "TAQLYN_WORKSPACE=/workspace",
+        "-e", "TAQLYN_API_URL=http://host.docker.internal:8080",
+        "-v", "taqlyn-mcp-config:/home/mcp/.config/taqlyn",
+        "-v", "${workspaceFolder}:/workspace:ro",
+        "ghcr.io/taqlyn/agents:latest"
+      ]
+    }
+  }
+}

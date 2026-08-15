@@ -1,6 +1,7 @@
-# Taqlyn agents (MCP + skills)
+# Taqlyn agents
 
-**Architecture brief:** A local-first Go MCP authenticates to a Taqlyn account (dashboard session) with **environment** (`sandbox` | `production` | `both`) and **permission** (`read` | `write`). Skills drive integrate/debug so the agent asks the user as little as possible. HTTP + Docker now; the same binary is what a future hosted MCP will run.
+**Date:** 2026-08-15  
+**Architecture brief:** A local-first Go MCP authenticates to a Taqlyn account (dashboard session) with **environment** (`sandbox` | `production` | `both`) and **permission** (`read` | `write`). Skills drive integrate/debug so the agent asks the user as little as possible. Shipping form is the **prebuilt image `ghcr.io/taqlyn/agents`** (stdio `docker run -i` or HTTP). Hosted MCP later reuses the same HTTP mode.
 
 ## Document map
 
@@ -13,4 +14,4 @@
 
 ## Extraction
 
-Keep MCP as one binary. If a hosted multi-tenant MCP ships later, reuse `internal/server` + streamable HTTP and add request-scoped Bearer tokens; do not split tools first.
+Keep MCP as one binary / one image. If a hosted multi-tenant MCP ships later, reuse `internal/server` + streamable HTTP and add request-scoped Bearer tokens; do not split tools first.

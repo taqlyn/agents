@@ -1,15 +1,19 @@
 name: taqlyn-mcp
 
+# Pull-only. No Go toolchain and no git clone.
+#   docker compose up
+# Local contributors: docker compose -f docker-compose.yml -f docker-compose.build.yml up --build
+
 services:
   mcp:
-    build: .
-    image: taqlyn/mcp:local
+    image: ghcr.io/taqlyn/agents:latest
+    pull_policy: always
     ports:
       - "8787:8787"
     environment:
       TAQLYN_MCP_TRANSPORT: http
       TAQLYN_MCP_ADDR: ":8787"
-      # From the container, host compose API is typically host.docker.internal:8080
+      TAQLYN_WORKSPACE: /workspace
       TAQLYN_API_URL: ${TAQLYN_API_URL:-http://host.docker.internal:8080}
       TAQLYN_ENV: ${TAQLYN_ENV:-sandbox}
       TAQLYN_PERMISSION: ${TAQLYN_PERMISSION:-write}
@@ -18,8 +22,15 @@ services:
       TAQLYN_SESSION_TOKEN: ${TAQLYN_SESSION_TOKEN:-}
     volumes:
       - taqlyn_mcp_config:/home/mcp/.config/taqlyn
+      - ${TAQLYN_WORKSPACE_HOST:-.}:/workspace:ro
     extra_hosts:
       - "host.docker.internal:host-gateway"
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8787/healthz"]
+      interval: 15s
+      timeout: 3s
+      retries: 3
+      start_period: 5s
 
 volumes:
   taqlyn_mcp_config:

@@ -61,3 +61,18 @@ func TestStoreRoundTrip(t *testing.T) {
 		t.Fatal(st2.Get())
 	}
 }
+
+func TestWorkspaceRootEnv(t *testing.T) {
+	t.Setenv("TAQLYN_WORKSPACE", "/tmp/app")
+	got, err := workspaceRoot("")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got != "/tmp/app" {
+		t.Fatal(got)
+	}
+	got, err = workspaceRoot("/explicit")
+	if err != nil || got != "/explicit" {
+		t.Fatalf("%s %v", got, err)
+	}
+}

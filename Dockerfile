@@ -4,17 +4,19 @@ WORKDIR /src
 COPY go.mod go.sum ./
 RUN go mod download
 COPY . .
-RUN CGO_ENABLED=0 go build -o /out/taqlyn-mcp ./cmd/taqlyn-mcp
+RUN CGO_ENABLED=0 go build -ldflags="-s -w" -o /out/taqlyn-mcp ./cmd/taqlyn-mcp
 
 FROM alpine:3.21
 RUN adduser -D -u 65532 mcp \
-  && apk add --no-cache ca-certificates wget
+  && apk add --no-cache ca-certificates wget \
+  && mkdir -p /workspace /home/mcp/.config/taqlyn \
+  && chown -R mcp:mcp /workspace /home/mcp
 USER mcp
+WORKDIR /workspace
 COPY --from=build /out/taqlyn-mcp /usr/local/bin/taqlyn-mcp
-ENV TAQLYN_MCP_TRANSPORT=http \
+ENV TAQLYN_MCP_TRANSPORT=stdio \
     TAQLYN_MCP_ADDR=:8787 \
-    TAQLYN_API_URL=http://127.0.0.1:8080
+    TAQLYN_WORKSPACE=/workspace \
+    TAQLYN_API_URL=http://host.docker.internal:8080
 EXPOSE 8787
-HEALTHCHECK --interval=15s --timeout=3s --retries=3 \
-  CMD wget -qO- http://127.0.0.1:8787/healthz >/dev/null || exit 1
 ENTRYPOINT ["/usr/local/bin/taqlyn-mcp"]

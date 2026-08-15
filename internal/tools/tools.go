@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"os"
 	"strings"
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
@@ -361,10 +362,11 @@ type inspectIn struct {
 }
 
 func (d Deps) inspectWorkspace(_ context.Context, _ *mcp.CallToolRequest, in inspectIn) (*mcp.CallToolResult, any, error) {
-	if strings.TrimSpace(in.Root) == "" {
-		return nil, nil, fmt.Errorf("root is required")
+	root, err := workspaceRoot(in.Root)
+	if err != nil {
+		return nil, nil, err
 	}
-	r, err := workspace.Inspect(in.Root)
+	r, err := workspace.Inspect(root)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -377,10 +379,11 @@ type planIn struct {
 }
 
 func (d Deps) integrationPlan(ctx context.Context, _ *mcp.CallToolRequest, in planIn) (*mcp.CallToolResult, any, error) {
-	if strings.TrimSpace(in.Root) == "" {
-		return nil, nil, fmt.Errorf("root is required")
+	root, err := workspaceRoot(in.Root)
+	if err != nil {
+		return nil, nil, err
 	}
-	ws, err := workspace.Inspect(in.Root)
+	ws, err := workspace.Inspect(root)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -404,7 +407,7 @@ func (d Deps) integrationPlan(ctx context.Context, _ *mcp.CallToolRequest, in pl
 	next := []string{}
 	name := strings.TrimSpace(in.AppName)
 	if name == "" {
-		name = filepathBase(in.Root)
+		name = filepathBase(root)
 	}
 	if len(apps) == 0 {
 		next = append(next, "No apps yet. Call create_app with name="+name+" (write).")
@@ -426,6 +429,20 @@ func (d Deps) integrationPlan(ctx context.Context, _ *mcp.CallToolRequest, in pl
 	plan["environment"] = s.Environment
 	plan["permission"] = s.Permission
 	return text(plan)
+}
+
+func workspaceRoot(root string) (string, error) {
+	root = strings.TrimSpace(root)
+	if root != "" {
+		return root, nil
+	}
+	if w := strings.TrimSpace(os.Getenv("TAQLYN_WORKSPACE")); w != "" {
+		return w, nil
+	}
+	if st, err := os.Stat("/workspace"); err == nil && st.IsDir() {
+		return "/workspace", nil
+	}
+	return "", fmt.Errorf("root is required (or set TAQLYN_WORKSPACE / mount the project at /workspace)")
 }
 
 func filepathBase(p string) string {
