@@ -45,7 +45,7 @@ jobs:
           images: ${{ env.IMAGE }}
           tags: |
             type=raw,value=latest,enable={{is_default_branch}}
-            type=sha,prefix=
+            type=sha
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
       - uses: docker/build-push-action@v6
@@ -61,7 +61,21 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh api --method PUT \
-            -H "Accept: application/vnd.github+json" \
-            "/orgs/taqlyn/packages/container/agents/visibility" \
-            -f visibility=public
+          set -euo pipefail
+          id="$(gh api graphql -f query='
+            query {
+              repository(owner:"taqlyn", name:"agents") {
+                packages(first:10) { nodes { id name } }
+              }
+            }' --jq '.data.repository.packages.nodes[] | select(.name=="agents") | .id' | head -1)"
+          echo "package id=${id}"
+          if [ -z "$id" ]; then
+            echo "package id not found yet"
+            exit 1
+          fi
+          gh api graphql -f query='
+            mutation($id:ID!) {
+              changePackageVisibility(input:{packageId:$id, visibility:PUBLIC}) {
+                package { name }
+              }
+            }' -f id="$id"

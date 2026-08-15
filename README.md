@@ -16,10 +16,14 @@ One time:
 
 ```bash
 docker pull ghcr.io/taqlyn/agents:latest
-mkdir -p ~/.config/taqlyn
 ```
 
-If the pull is unauthorized, sign in once (`docker login ghcr.io`) with a GitHub user that can read the `taqlyn` org package, then pull again.
+Anonymous pull works once the GitHub Container package is **public** ([package page](https://github.com/taqlyn/agents/pkgs/container/agents) → Change visibility). If the pull is 401, sign in once:
+
+```bash
+echo YOUR_GITHUB_TOKEN | docker login ghcr.io -u YOUR_GITHUB_USER --password-stdin
+docker pull ghcr.io/taqlyn/agents:latest
+```
 
 `~/.cursor/mcp.json` or the project `.cursor/mcp.json`:
 
