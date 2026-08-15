@@ -1,0 +1,10 @@
+.git
+.gitignore
+.env
+bin
+dist
+**/*_test.go
+skills
+docs
+*.md
+!README.md

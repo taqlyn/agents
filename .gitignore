@@ -1,0 +1,9 @@
+/bin/
+/dist/
+/taqlyn-mcp
+*.exe
+.DS_Store
+.env
+.idea/
+.vscode/
+coverage.out

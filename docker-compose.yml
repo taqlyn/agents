@@ -1,0 +1,25 @@
+name: taqlyn-mcp
+
+services:
+  mcp:
+    build: .
+    image: taqlyn/mcp:local
+    ports:
+      - "8787:8787"
+    environment:
+      TAQLYN_MCP_TRANSPORT: http
+      TAQLYN_MCP_ADDR: ":8787"
+      # From the container, host compose API is typically host.docker.internal:8080
+      TAQLYN_API_URL: ${TAQLYN_API_URL:-http://host.docker.internal:8080}
+      TAQLYN_ENV: ${TAQLYN_ENV:-sandbox}
+      TAQLYN_PERMISSION: ${TAQLYN_PERMISSION:-write}
+      TAQLYN_EMAIL: ${TAQLYN_EMAIL:-}
+      TAQLYN_PASSWORD: ${TAQLYN_PASSWORD:-}
+      TAQLYN_SESSION_TOKEN: ${TAQLYN_SESSION_TOKEN:-}
+    volumes:
+      - taqlyn_mcp_config:/home/mcp/.config/taqlyn
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+volumes:
+  taqlyn_mcp_config:
