@@ -4,6 +4,7 @@ import "testing"
 
 func TestAssertLiveAPI(t *testing.T) {
 	ok := []string{
+		"https://api.taqlyn.com",
 		"https://api.rutvik.qzz.io",
 		"https://api.example.com/v1",
 	}

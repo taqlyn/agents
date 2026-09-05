@@ -12,7 +12,7 @@ import (
 
 const (
 	// DefaultAPIURL is the live Taqlyn control plane. MCP never uses a local API.
-	DefaultAPIURL    = "https://api.rutvik.qzz.io"
+	DefaultAPIURL    = "https://api.taqlyn.com"
 	DefaultTransport = "stdio"
 	DefaultHTTPAddr  = ":8787"
 )
